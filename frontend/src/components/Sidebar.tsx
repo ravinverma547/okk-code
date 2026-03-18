@@ -1,0 +1,87 @@
+"use client"
+
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { 
+  BarChart3, 
+  Users, 
+  ClipboardCheck, 
+  Bell, 
+  Settings, 
+  GraduationCap,
+  LogOut,
+  Shield,
+  CreditCard,
+  BookOpen,
+  Trophy
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+import { useAuth } from "@/context/AuthContext"
+
+const navigation = [
+  { name: "Dashboard", href: "/", icon: BarChart3 },
+  { name: "Students", href: "/students", icon: Users, adminOnly: true },
+  { name: "Attendance", href: "/attendance", icon: ClipboardCheck, adminOnly: true },
+  { name: "Fees", href: "/fees", icon: CreditCard, adminOnly: true },
+  { name: "Courses", href: "/courses", icon: BookOpen },
+  { name: "Admins", href: "/admins", icon: Shield, adminOnly: true },
+  { name: "Performance", href: "/performance", icon: Trophy },
+]
+
+export default function Sidebar() {
+  const pathname = usePathname()
+  const { user, logout } = useAuth()
+
+  return (
+    <div className="flex h-full w-64 flex-col bg-slate-900 text-white">
+      <div className="flex h-16 items-center px-6">
+        <GraduationCap className="h-8 w-8 text-indigo-400" />
+        <span className="ml-3 text-xl font-bold tracking-tight">OKK Code SMS</span>
+      </div>
+      
+      <nav className="flex-1 space-y-1 px-3 py-4">
+        {navigation.filter(item => !item.adminOnly || user?.role === 'ADMIN').map((item) => {
+          const isActive = pathname === item.href
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={cn(
+                "group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+                isActive 
+                  ? "bg-indigo-600 text-white" 
+                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
+              )}
+            >
+              <item.icon className={cn(
+                "mr-3 h-5 w-5 flex-shrink-0 transition-colors",
+                isActive ? "text-white" : "text-slate-400 group-hover:text-white"
+              )} />
+              {item.name}
+            </Link>
+          )
+        })}
+      </nav>
+      
+      <div className="border-t border-slate-800 p-4 space-y-4">
+        <div className="flex items-center">
+          <div className="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center text-xs font-bold">
+            {user?.name?.charAt(0) || 'A'}
+          </div>
+          <div className="ml-3 overflow-hidden">
+            <p className="text-sm font-medium text-white truncate">{user?.name || 'Administrator'}</p>
+            <p className="text-xs text-slate-400 truncate">{user?.email || 'admin@example.com'}</p>
+          </div>
+        </div>
+        
+        <button 
+          onClick={logout}
+          className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition-colors"
+        >
+          <LogOut className="mr-3 h-5 w-5" />
+          Sign Out
+        </button>
+      </div>
+    </div>
+  )
+}

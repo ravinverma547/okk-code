@@ -8,7 +8,7 @@ const { studentSchema } = require('../validators/schemas');
 router.post('/register', protect, authorize('ADMIN'), validate(studentSchema.register), registerStudent);
 
 router.route('/')
-    .get(protect, authorize('ADMIN'), getStudents);
+    .get(protect, authorize('ADMIN', 'TEACHER'), getStudents);
 
 router.post('/enroll', protect, authorize('ADMIN'), enrollInCourse);
 

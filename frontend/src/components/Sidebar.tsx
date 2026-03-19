@@ -21,12 +21,13 @@ import { useAuth } from "@/context/AuthContext"
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: BarChart3 },
-  { name: "Students", href: "/students", icon: Users, adminOnly: true },
-  { name: "Attendance", href: "/attendance", icon: ClipboardCheck, adminOnly: true },
-  { name: "Fees", href: "/fees", icon: CreditCard, adminOnly: true },
+  { name: "Students", href: "/students", icon: Users, roles: ['ADMIN', 'TEACHER'] },
+  { name: "Teachers", href: "/teachers", icon: Users, roles: ['ADMIN'], adminOnly: true }, // Admin manages teachers
+  { name: "Attendance", href: "/attendance", icon: ClipboardCheck, roles: ['ADMIN', 'TEACHER'] },
+  { name: "Fees", href: "/fees", icon: CreditCard, roles: ['ADMIN'] },
   { name: "Courses", href: "/courses", icon: BookOpen },
-  { name: "Performance", href: "/performance", icon: Trophy },
-  { name: "Admins", href: "/admins", icon: Shield, adminOnly: true },
+  { name: "Performance", href: "/performance", icon: Trophy, roles: ['ADMIN', 'TEACHER'] },
+  { name: "Admins", href: "/admins", icon: Shield, roles: ['ADMIN'] },
   { name: "Notices", href: "/notices", icon: Megaphone },
 ]
 
@@ -44,7 +45,7 @@ export default function Sidebar() {
       </div>
       
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {navigation.filter(item => !item.adminOnly || user?.role === 'ADMIN').map((item) => {
+        {navigation.filter(item => !item.roles || (user?.role && item.roles.includes(user.role))).map((item) => {
           const isActive = pathname === item.href
           return (
             <Link

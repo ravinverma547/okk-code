@@ -37,7 +37,8 @@ export const authService = {
       name: responseData.name,
       email: responseData.email,
       role: responseData.role,
-      studentProfile: responseData.studentProfile
+      studentProfile: responseData.studentProfile,
+      teacherProfile: responseData.teacherProfile
     };
 
     if (responseData.token) {
@@ -97,6 +98,37 @@ export const authService = {
     const response = await api.put(`/auth/promote/${userId}`);
     return response.data;
   }
+};
+
+export const teacherService = {
+  getTeachers: async (params = {}) => {
+    const response = await api.get('/teachers', { params });
+    return response.data.data;
+  },
+  registerTeacher: async (data: any) => {
+    const response = await api.post('/teachers/register', data);
+    return response.data.data;
+  },
+  getTeacherProfile: async () => {
+    const response = await api.get('/teachers/profile/me');
+    return response.data.data;
+  },
+  getTeacherById: async (id: string) => {
+    const response = await api.get(`/teachers/${id}`);
+    return response.data.data;
+  },
+  updateTeacher: async (id: string, data: any) => {
+    const response = await api.put(`/teachers/${id}`, data);
+    return response.data.data;
+  },
+  assignCourse: async (teacherId: string, courseId: string) => {
+    const response = await api.post('/teachers/assign-course', { teacherId, courseId });
+    return response.data.data;
+  },
+  removeCourse: async (teacherId: string, courseId: string) => {
+    const response = await api.post('/teachers/remove-course', { teacherId, courseId });
+    return response.data.data;
+  },
 };
 
 export const feeService = {

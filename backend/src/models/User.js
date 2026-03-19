@@ -5,8 +5,9 @@ const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ['ADMIN', 'STUDENT'], default: 'STUDENT' },
-    studentProfile: { type: mongoose.Schema.Types.ObjectId, ref: 'Student' } // Only for STUDENT role
+    role: { type: String, enum: ['ADMIN', 'STUDENT', 'TEACHER'], default: 'STUDENT' },
+    studentProfile: { type: mongoose.Schema.Types.ObjectId, ref: 'Student' }, // Only for STUDENT role
+    teacherProfile: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' } // Only for TEACHER role
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {

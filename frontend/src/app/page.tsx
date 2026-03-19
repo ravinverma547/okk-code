@@ -62,6 +62,24 @@ export default function Home() {
         return
       }
 
+      if (user.role === 'TEACHER') {
+        try {
+          const { teacherService } = await import("@/api/services")
+          const profile = await teacherService.getTeacherProfile()
+          setStats({
+            courseCount: profile.assignedCourses?.length || 0,
+            studentCount: profile.studentCount || 0, // Backend should return this or we calculate
+            experience: profile.experience,
+            subjects: profile.subjects
+          })
+        } catch (err) {
+          console.error("Failed to fetch teacher dashboard data", err)
+        } finally {
+          setLoading(false)
+        }
+        return
+      }
+
       try {
         const data = await dashboardService.getStats()
         setStats(data)
@@ -121,6 +139,102 @@ export default function Home() {
       bg: "bg-rose-50"
     },
   ]
+
+  if (user?.role === 'TEACHER') {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-700">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-indigo-400 bg-clip-text text-transparent">Welcome, {user?.name}!</h1>
+            <p className="text-slate-500">Teacher Dashboard • {stats?.qualification || 'Faculty Member'}</p>
+          </div>
+          <div className="px-4 py-2 bg-indigo-50 rounded-xl border border-indigo-100 flex items-center gap-3">
+             <div className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+             <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Role: Teacher</span>
+          </div>
+        </div>
+
+        {/* Teacher Stats Grid */}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 glass transition-all hover:shadow-md">
+            <div className="flex items-center gap-4">
+              <div className="rounded-xl bg-indigo-50 p-3 text-indigo-600">
+                <BookOpen className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-500">Assigned Courses</p>
+                <p className="text-2xl font-bold text-slate-900">{stats?.courseCount || 0}</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 glass transition-all hover:shadow-md">
+            <div className="flex items-center gap-4">
+              <div className="rounded-xl bg-blue-50 p-3 text-blue-600">
+                <Users className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-500">Total Students</p>
+                <p className="text-2xl font-bold text-slate-900">{stats?.studentCount || 0}</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 glass transition-all hover:shadow-md">
+            <div className="flex items-center gap-4">
+              <div className="rounded-xl bg-emerald-50 p-3 text-emerald-600">
+                <Trophy className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-500">Years Experience</p>
+                <p className="text-2xl font-bold text-slate-900">{stats?.experience || 0} Years</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Actions for Teachers */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+             <h3 className="text-lg font-bold text-slate-900 mb-4">My Quick Actions</h3>
+             <div className="grid grid-cols-2 gap-4">
+               <button onClick={() => router.push('/attendance')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-100 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-100 group transition-all">
+                 <CheckCircle2 className="h-6 w-6 text-indigo-600 mb-2 group-hover:scale-110 transition-transform" />
+                 <span className="text-sm font-medium text-slate-700">Attendance</span>
+               </button>
+               <button onClick={() => router.push('/performance')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-100 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-100 group transition-all">
+                 <TrendingUp className="h-6 w-6 text-emerald-600 mb-2 group-hover:scale-110 transition-transform" />
+                 <span className="text-sm font-medium text-slate-700">Performance</span>
+               </button>
+               <button onClick={() => router.push('/courses')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-100 bg-slate-50 hover:bg-amber-50 hover:border-amber-100 group transition-all">
+                 <BookOpen className="h-6 w-6 text-amber-600 mb-2 group-hover:scale-110 transition-transform" />
+                 <span className="text-sm font-medium text-slate-700">Courses</span>
+               </button>
+               <button onClick={() => router.push('/notices')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-100 bg-slate-50 hover:bg-rose-50 hover:border-rose-100 group transition-all">
+                 <Megaphone className="h-6 w-6 text-rose-600 mb-2 group-hover:scale-110 transition-transform" />
+                 <span className="text-sm font-medium text-slate-700">Notices</span>
+               </button>
+             </div>
+           </div>
+
+           <div className="rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-700 p-8 shadow-xl text-white relative overflow-hidden group">
+              <div className="relative z-10">
+                <h3 className="text-2xl font-bold">Manage Your Classes</h3>
+                <p className="mt-3 text-indigo-100 leading-relaxed">
+                  Track student progress, mark attendance, and share important notices with your assigned batches effortlessly.
+                </p>
+                <div className="mt-8 flex flex-wrap gap-2">
+                  {stats?.subjects?.map((sub: string, i: number) => (
+                    <span key={i} className="px-3 py-1 bg-white/20 rounded-full text-xs font-medium border border-white/10">
+                      {sub}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <BookOpen className="absolute -right-10 -bottom-10 h-40 w-40 text-white/10 rotate-12 group-hover:scale-110 transition-transform" />
+           </div>
+        </div>
+      </div>
+    )
+  }
 
   if (user?.role === 'STUDENT') {
     return (

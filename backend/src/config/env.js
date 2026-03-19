@@ -1,14 +1,15 @@
 const { z } = require('zod');
 const dotenv = require('dotenv');
 
-dotenv.config();
+const path = require('path');
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const envSchema = z.object({
     PORT: z.string().default('5000'),
-    MONGODB_URI: z.string().url(),
-    JWT_SECRET: z.string().min(10),
+    MONGODB_URI: z.string(),
+    JWT_SECRET: z.string(),
     JWT_EXPIRE: z.string().default('30d'),
-    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+    NODE_ENV: z.string().default('development'),
 });
 
 const envVars = {

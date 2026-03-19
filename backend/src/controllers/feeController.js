@@ -14,7 +14,16 @@ const createFee = asyncHandler(async (req, res) => {
  * @desc    Get fees for a specific student
  */
 const getStudentFees = asyncHandler(async (req, res) => {
-    const fees = await feeService.getStudentFees(req.params.studentId);
+    const { studentId } = req.params;
+    
+    // Authorization check: Student can only see their own fees
+    const studentProfileId = req.user.studentProfile?._id || req.user.studentProfile;
+    if (req.user.role === 'STUDENT' && studentProfileId?.toString() !== studentId) {
+        res.status(403);
+        throw new Error('Not authorized to view these fees');
+    }
+
+    const fees = await feeService.getStudentFees(studentId);
     sendResponse(res, 200, 'Fees retrieved', fees);
 });
 
@@ -22,14 +31,23 @@ const getStudentFees = asyncHandler(async (req, res) => {
  * @desc    Process fee payment
  */
 const payFee = asyncHandler(async (req, res) => {
-    const { transactionId } = req.body;
-    const fee = await feeService.markAsPaid(req.params.id, transactionId);
+    const { transactionId, amount } = req.body;
+    const fee = await feeService.recordPayment(req.params.id, amount, transactionId);
     
     // Emit event
     const io = req.app.get('io');
-    io.emit('fee_paid', { feeId: fee._id, amount: fee.amount });
+    io.emit('fee_paid', { feeId: fee._id, amount: amount || fee.totalAmount });
 
     sendResponse(res, 200, 'Payment successful', fee);
+});
+
+/**
+ * @desc    Update fee status manually
+ */
+const updateFeeStatus = asyncHandler(async (req, res) => {
+    const { status } = req.body;
+    const fee = await feeService.updateStatus(req.params.id, status);
+    sendResponse(res, 200, 'Fee status updated', fee);
 });
 
 /**
@@ -42,4 +60,4 @@ const getAllFees = asyncHandler(async (req, res) => {
     sendResponse(res, 200, 'All fees retrieved', fees);
 });
 
-module.exports = { createFee, getStudentFees, payFee, getAllFees };
+module.exports = { createFee, getStudentFees, payFee, getAllFees, updateFeeStatus };

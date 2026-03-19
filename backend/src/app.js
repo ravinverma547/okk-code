@@ -24,7 +24,7 @@ app.use(morgan('dev'));
 // Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100
+    max: 1000
 });
 app.use('/api/', limiter);
 
@@ -40,6 +40,8 @@ const attendanceRoutes = require('./routes/attendanceRoutes');
 const testRoutes = require('./routes/testRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const performanceRoutes = require('./routes/performanceRoutes');
+const noticeRoutes = require('./routes/noticeRoutes');
+const enrollmentRequestRoutes = require('./routes/enrollmentRequestRoutes');
 const initSockets = require('./sockets/socketHandler');
 const initCronJobs = require('./cron/jobs');
 
@@ -58,6 +60,8 @@ app.use('/api/v1/attendance', attendanceRoutes);
 app.use('/api/v1/tests', testRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/performance', performanceRoutes);
+app.use('/api/v1/notices', noticeRoutes);
+app.use('/api/v1/course-requests', enrollmentRequestRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {

@@ -11,11 +11,11 @@ const registerUser = asyncHandler(async (req, res) => {
     const User = require('../models/User');
     const userCount = await User.countDocuments();
     
-    // If users exist, only an ADMIN can register others (handled by route protect/authorize if we add it)
-    // For now, let's keep it simple: if users exist and requester is not admin, deny (if we want stricter control)
-    // Or just let the route protect it.
+    const adminCount = await User.countDocuments({ role: 'ADMIN' });
     
-    if (userCount > 0 && (!req.user || req.user.role !== 'ADMIN')) {
+    if (adminCount === 0) {
+        req.body.role = 'ADMIN';
+    } else if (!req.user || req.user.role !== 'ADMIN') {
         res.status(403);
         throw new Error('Only admins can register new users');
     }

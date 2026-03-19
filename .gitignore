@@ -1,6 +1,13 @@
 node_modules/
 .env
-repomix-output.md
+.env.local
+.next/
 dist/
 build/
 *.log
+repomix-output.md
+repomix-output.xml
+tmp/
+debug_students.js
+check_db_root.js
+raw_check.js

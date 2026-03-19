@@ -20,6 +20,14 @@ class CourseRepository {
             { new: true, ...options }
         );
     }
+
+    async update(id, updateData) {
+        return await Course.findByIdAndUpdate(id, updateData, { new: true });
+    }
+
+    async delete(id) {
+        return await Course.findByIdAndDelete(id);
+    }
 }
 
 module.exports = new CourseRepository();

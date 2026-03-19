@@ -32,4 +32,20 @@ const enrollStudent = asyncHandler(async (req, res) => {
     sendResponse(res, 200, 'Student enrolled successfully', course);
 });
 
-module.exports = { createCourse, getCourses, enrollStudent };
+/**
+ * @desc    Update course
+ */
+const updateCourse = asyncHandler(async (req, res) => {
+    const course = await courseService.updateCourse(req.params.id, req.body);
+    sendResponse(res, 200, 'Course updated successfully', course);
+});
+
+/**
+ * @desc    Delete course
+ */
+const deleteCourse = asyncHandler(async (req, res) => {
+    await courseService.deleteCourse(req.params.id);
+    sendResponse(res, 200, 'Course deleted successfully');
+});
+
+module.exports = { createCourse, getCourses, enrollStudent, updateCourse, deleteCourse };

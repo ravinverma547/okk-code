@@ -2,6 +2,10 @@ const Fee = require('../models/Fee');
 const Student = require('../models/Student');
 
 class FeeRepository {
+    async create(feeData) {
+        return await Fee.create(feeData);
+    }
+
     async createMany(fees) {
         return await Fee.insertMany(fees);
     }
@@ -26,7 +30,10 @@ class FeeRepository {
         return await Fee.find({
             status: 'PENDING',
             dueDate: { $lt: new Date() }
-        }).populate('student');
+        }).populate({
+            path: 'student',
+            populate: { path: 'user', select: 'name' }
+        });
     }
 
     async getMonthlyRevenue() {
@@ -50,7 +57,10 @@ class FeeRepository {
         ]);
     }
     async findAll() {
-        return await Fee.find().populate('student').sort({ dueDate: -1 });
+        return await Fee.find().populate({
+            path: 'student',
+            populate: { path: 'user', select: 'name' }
+        }).sort({ dueDate: -1 });
     }
 }
 

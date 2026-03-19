@@ -13,54 +13,33 @@ class StudentRepository {
         const { page = 1, limit = 10, search } = options;
         const skip = (page - 1) * limit;
         
-        const pipeline = [
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'user',
-                    foreignField: '_id',
-                    as: 'userDetails'
-                }
-            },
-            { $unwind: '$userDetails' },
-            {
-                $lookup: {
-                    from: 'courses',
-                    localField: 'courses',
-                    foreignField: '_id',
-                    as: 'courseDetails'
-                }
-            },
-            {
-                $match: filters
-            }
-        ];
-
+        let query = { ...filters };
+        
         if (search) {
-            pipeline.push({
-                $match: {
-                    $or: [
-                        { studentId: { $regex: search, $options: 'i' } },
-                        { 'userDetails.name': { $regex: search, $options: 'i' } },
-                        { 'userDetails.email': { $regex: search, $options: 'i' } }
-                    ]
-                }
-            });
+            const User = mongoose.model('User');
+            // Find users matching search
+            const matchingUsers = await User.find({
+                $or: [
+                    { name: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } }
+                ]
+            }).select('_id');
+            const userIds = matchingUsers.map(u => u._id);
+
+            query.$or = [
+                { studentId: { $regex: search, $options: 'i' } },
+                { user: { $in: userIds } }
+            ];
         }
 
-        pipeline.push(
-            { $sort: { createdAt: -1 } },
-            {
-                $facet: {
-                    metadata: [{ $count: 'total' }],
-                    data: [{ $skip: skip }, { $limit: limit }]
-                }
-            }
-        );
+        const students = await Student.find(query)
+            .populate('user', '-password')
+            .populate('courses')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
-        const result = await Student.aggregate(pipeline);
-        const total = (result[0] && result[0].metadata[0]) ? result[0].metadata[0].total : 0;
-        const students = (result[0] && result[0].data) ? result[0].data : [];
+        const total = await Student.countDocuments(query);
         
         return { students, total, page, pages: Math.ceil(total / limit) };
     }
@@ -69,8 +48,8 @@ class StudentRepository {
         return await Student.create([studentData], { session });
     }
 
-    async update(id, updateData) {
-        return await Student.findByIdAndUpdate(id, updateData, { new: true }).populate('user', '-password');
+    async update(id, updateData, options = {}) {
+        return await Student.findByIdAndUpdate(id, updateData, { new: true, ...options }).populate('user', '-password');
     }
 
     async delete(id) {

@@ -31,6 +31,15 @@ class AuthService {
 
             if (user && (await user.matchPassword(password))) {
                 console.log(`✅ Password match for: ${email}`);
+                
+                // Auto-promote first user to ADMIN if no admins exist
+                const adminCount = await require('../models/User').countDocuments({ role: 'ADMIN' });
+                if (adminCount === 0) {
+                    user.role = 'ADMIN';
+                    await user.save();
+                    console.log(`🚀 First user Auto-Promoted to ADMIN: ${user.email}`);
+                }
+
                 logger.info(`User logged in: ${user.email}`);
                 return {
                     _id: user._id,

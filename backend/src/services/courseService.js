@@ -14,23 +14,29 @@ class CourseService {
         return await courseRepository.findAll();
     }
 
+    async getCourseById(id) {
+        return await courseRepository.findById(id);
+    }
+
     async enrollStudent(courseId, studentId) {
-        const session = await mongoose.startSession();
-        session.startTransaction();
         try {
-            const course = await courseRepository.addStudentToCourse(courseId, studentId, { session });
-            await studentRepository.update(studentId, { $addToSet: { courses: courseId } }, { session });
+            const course = await courseRepository.addStudentToCourse(courseId, studentId);
+            await studentRepository.update(studentId, { $addToSet: { courses: courseId } });
             
-            await session.commitTransaction();
             logger.info(`Student ${studentId} enrolled in course ${courseId}`);
             return course;
         } catch (error) {
-            await session.abortTransaction();
             logger.error(`Enrollment failed for student ${studentId} in course ${courseId}`, error);
             throw error;
-        } finally {
-            session.endSession();
         }
+    }
+
+    async updateCourse(id, updateData) {
+        return await courseRepository.update(id, updateData);
+    }
+
+    async deleteCourse(id) {
+        return await courseRepository.delete(id);
     }
 }
 

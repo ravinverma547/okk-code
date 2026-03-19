@@ -5,7 +5,10 @@ const mongoose = require('mongoose');
 class FeeService {
 
     async createFee(feeData) {
-        const fee = await feeRepository.create(feeData);
+        const fee = await feeRepository.create({
+            ...feeData,
+            totalAmount: feeData.amount || feeData.totalAmount // support both for compatibility during transition
+        });
         logger.info(`Fee record created for student: ${fee.student}`);
         return fee;
     }
@@ -14,40 +17,57 @@ class FeeService {
         return await feeRepository.findByStudent(studentId);
     }
 
-    async markAsPaid(feeId, transactionId) {
-        const session = await mongoose.startSession();
-        session.startTransaction();
-
+    async recordPayment(feeId, paidAmount, transactionId) {
         try {
-            const fee = await feeRepository.findById(feeId, { session });
+            const fee = await feeRepository.findById(feeId);
 
             if (!fee) throw new Error('Fee record not found');
-            if (fee.status === 'PAID') throw new Error('Fee already paid');
-            if (fee.amount <= 0) throw new Error('Invalid fee amount');
+            if (fee.status === 'PAID') throw new Error('Fee already fully paid');
+            if (paidAmount <= 0) throw new Error('Invalid payment amount');
+
+            const newPaidAmount = (fee.paidAmount || 0) + Number(paidAmount);
+            let newStatus = 'PARTIAL';
+            
+            if (newPaidAmount >= fee.totalAmount) {
+                newStatus = 'PAID';
+            }
 
             const updatedFee = await feeRepository.update(
                 feeId,
                 {
-                    status: 'PAID',
+                    status: newStatus,
+                    paidAmount: newPaidAmount,
                     transactionId,
                     paymentDate: new Date()
-                },
-                { session }
+                }
             );
 
-            await session.commitTransaction();
-
-            logger.info(`Fee ${feeId} marked as PAID`, { transactionId });
+            logger.info(`Payment recorded for fee ${feeId}. Status: ${newStatus}`, { transactionId, paidAmount });
 
             return updatedFee;
 
         } catch (error) {
-            await session.abortTransaction();
-            logger.error(`Payment failed for fee: ${feeId}`, error);
+            logger.error(`Payment recording failed for fee: ${feeId}`, error);
             throw error;
-        } finally {
-            session.endSession();
         }
+    }
+
+    async updateStatus(feeId, status) {
+        const updateData = { status };
+        
+        // If marking as PAID manually, ensure paidAmount matches totalAmount
+        if (status === 'PAID') {
+            const fee = await feeRepository.findById(feeId);
+            if (fee) {
+                updateData.paidAmount = fee.totalAmount;
+                updateData.paymentDate = new Date();
+            }
+        } else if (status === 'PENDING') {
+            updateData.paidAmount = 0;
+            updateData.paymentDate = null;
+        }
+
+        return await feeRepository.update(feeId, updateData);
     }
 
     async getAllFees() {
@@ -88,10 +108,10 @@ class FeeService {
 
             installments.push({
                 student: studentId,
-                amount,
-                dueDate,
+                totalAmount: amount,
                 installmentNumber: i + 1,
-                status: 'PENDING'
+                status: 'PENDING',
+                dueDate
             });
         }
 

@@ -25,6 +25,9 @@ export default function StudentsPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [search, setSearch] = useState("")
+  const [statusFilter, setStatusFilter] = useState("")
+  const [courseFilter, setCourseFilter] = useState("")
+  const [courses, setCourses] = useState<any[]>([])
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
 
   // Form State
@@ -41,12 +44,26 @@ export default function StudentsPage() {
   const fetchStudents = async () => {
     setLoading(true)
     try {
-      const data = await studentService.getStudents({ search })
+      const data = await studentService.getStudents({ 
+        search, 
+        status: statusFilter, 
+        course: courseFilter 
+      })
       setStudents(data.students || [])
     } catch (err) {
       console.error("Failed to fetch students", err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchCourses = async () => {
+    try {
+      const { courseService } = await import("@/api/services")
+      const data = await courseService.getCourses()
+      setCourses(data || [])
+    } catch (err) {
+      console.error("Failed to fetch courses", err)
     }
   }
 
@@ -56,7 +73,8 @@ export default function StudentsPage() {
       return
     }
     fetchStudents()
-  }, [isAuthenticated, router, search])
+    fetchCourses()
+  }, [isAuthenticated, router, search, statusFilter, courseFilter])
 
   const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -105,7 +123,7 @@ export default function StudentsPage() {
       </div>
 
       <div className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
-        <div className="flex flex-col gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-4 border-b border-slate-100 p-4 lg:flex-row lg:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input 
@@ -113,8 +131,46 @@ export default function StudentsPage() {
               placeholder="Search by name or email..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500" 
+              className="w-full rounded-xl border-0 bg-slate-50 py-2.5 pl-10 pr-4 text-sm ring-1 ring-inset ring-slate-200 outline-none focus:ring-2 focus:ring-indigo-600 transition-all" 
             />
+          </div>
+          
+          <div className="flex flex-wrap gap-3">
+            <select 
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="rounded-xl border-0 bg-slate-50 py-2.5 pl-4 pr-10 text-sm ring-1 ring-inset ring-slate-200 outline-none focus:ring-2 focus:ring-indigo-600 transition-all font-medium text-slate-600"
+            >
+              <option value="">All Status</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+              <option value="AT_RISK">At Risk</option>
+            </select>
+
+            <select 
+              value={courseFilter}
+              onChange={(e) => setCourseFilter(e.target.value)}
+              className="rounded-xl border-0 bg-slate-50 py-2.5 pl-4 pr-10 text-sm ring-1 ring-inset ring-slate-200 outline-none focus:ring-2 focus:ring-indigo-600 transition-all font-medium text-slate-600"
+            >
+              <option value="">All Courses</option>
+              {courses.map(course => (
+                <option key={course._id} value={course._id}>{course.title}</option>
+              ))}
+            </select>
+            
+            {(statusFilter || courseFilter || search) && (
+              <button 
+                onClick={() => {
+                  setStatusFilter("")
+                  setCourseFilter("")
+                  setSearch("")
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+                Clear
+              </button>
+            )}
           </div>
         </div>
 
@@ -140,24 +196,40 @@ export default function StudentsPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 flex-shrink-0 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
-                          {(student.userDetails?.name || student.userId?.name || '?').charAt(0)}
+                          {(student.user?.name || student.userDetails?.name || student.userId?.name || '?').charAt(0)}
                         </div>
                         <div>
-                          <div className="font-medium text-slate-900">{student.userDetails?.name || student.userId?.name}</div>
+                          <div className="font-medium text-slate-900">{student.user?.name || student.userDetails?.name || student.userId?.name}</div>
                           <div className="text-xs text-slate-500">ID: {student.studentId}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1 text-sm text-slate-500">
-                        <div className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {student.userDetails?.email || student.userId?.email}</div>
+                        <div className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {student.user?.email || student.userDetails?.email || student.userId?.email}</div>
                         <div className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> {student.phone || 'N/A'}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
-                        <GraduationCap className="h-4 w-4 text-slate-400" />
-                        {student.courseDetails && student.courseDetails.length > 0 ? student.courseDetails[0].title : (student.course || 'Unassigned')}
+                      <div className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {student.courses && student.courses.length > 0 ? (
+                              student.courses.map((course: any) => (
+                                <span key={course._id} className="rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] text-indigo-700 font-bold border border-indigo-100 flex items-center gap-1">
+                                  <GraduationCap className="h-3 w-3" />
+                                  {course.title}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-slate-400 text-xs italic">Unassigned</span>
+                            )}
+                          </div>
+                        <div className={`w-fit rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                          student.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 
+                          student.status === 'INACTIVE' ? 'bg-slate-100 text-slate-700' : 'bg-rose-100 text-rose-700'
+                        }`}>
+                          {student.status}
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -182,7 +254,7 @@ export default function StudentsPage() {
                       {openDropdownId === student._id && (
                         <div className="absolute right-6 top-10 z-10 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                           <button
-                            onClick={() => handlePromote(student.userId?._id)}
+                            onClick={() => handlePromote(student.user?._id || student.userId?._id)}
                             className="block w-full px-4 py-2 text-sm text-left text-slate-700 hover:bg-slate-100"
                           >
                             <Shield className="mr-2 inline h-4 w-4 text-indigo-500" />

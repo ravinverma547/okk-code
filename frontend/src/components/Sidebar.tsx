@@ -13,7 +13,8 @@ import {
   Shield,
   CreditCard,
   BookOpen,
-  Trophy
+  Trophy,
+  Megaphone
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/context/AuthContext"
@@ -24,8 +25,9 @@ const navigation = [
   { name: "Attendance", href: "/attendance", icon: ClipboardCheck, adminOnly: true },
   { name: "Fees", href: "/fees", icon: CreditCard, adminOnly: true },
   { name: "Courses", href: "/courses", icon: BookOpen },
-  { name: "Admins", href: "/admins", icon: Shield, adminOnly: true },
   { name: "Performance", href: "/performance", icon: Trophy },
+  { name: "Admins", href: "/admins", icon: Shield, adminOnly: true },
+  { name: "Notices", href: "/notices", icon: Megaphone },
 ]
 
 export default function Sidebar() {
@@ -34,9 +36,11 @@ export default function Sidebar() {
 
   return (
     <div className="flex h-full w-64 flex-col bg-slate-900 text-white">
-      <div className="flex h-16 items-center px-6">
-        <GraduationCap className="h-8 w-8 text-indigo-400" />
-        <span className="ml-3 text-xl font-bold tracking-tight">OKK Code SMS</span>
+      <div className="flex h-20 items-center px-6 border-b border-slate-800/50">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 ring-1 ring-indigo-500/20">
+          <GraduationCap className="h-6 w-6 text-indigo-400" />
+        </div>
+        <span className="ml-3 text-xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">OKK Code</span>
       </div>
       
       <nav className="flex-1 space-y-1 px-3 py-4">

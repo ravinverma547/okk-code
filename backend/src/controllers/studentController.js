@@ -37,4 +37,19 @@ const getStudentById = asyncHandler(async (req, res) => {
     sendResponse(res, 200, 'Student profile retrieved', student);
 });
 
-module.exports = { registerStudent, getStudents, getStudentById };
+/**
+ * @desc    Enroll student in a course
+ * @route   POST /api/v1/students/enroll
+ * @access  Private/Student
+ */
+const enrollInCourse = asyncHandler(async (req, res) => {
+    const { courseId } = req.body;
+    // Get student ID from user profile
+    const user = req.user;
+    if (!user.studentProfile) throw new Error('Student profile not found');
+    
+    const student = await studentService.enrollInCourse(user.studentProfile, courseId);
+    sendResponse(res, 200, 'Enrolled in course successfully', student);
+});
+
+module.exports = { registerStudent, getStudents, getStudentById, enrollInCourse };

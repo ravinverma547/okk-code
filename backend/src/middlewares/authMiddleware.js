@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const env = require('../config/env');
 const asyncHandler = require('express-async-handler');
 
 const protect = asyncHandler(async (req, res, next) => {
@@ -8,8 +9,15 @@ const protect = asyncHandler(async (req, res, next) => {
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
             token = req.headers.authorization.split(' ')[1];
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = await User.findById(decoded.id).select('-password');
+            const decoded = jwt.verify(token, env.JWT_SECRET);
+            
+            req.user = await User.findById(decoded.id).select('-password').populate('studentProfile');
+            
+            if (!req.user) {
+                res.status(401);
+                throw new Error('Not authorized, user not found');
+            }
+            
             next();
         } catch (error) {
             console.error(error);
@@ -27,6 +35,7 @@ const protect = asyncHandler(async (req, res, next) => {
 const authorize = (...roles) => {
     return (req, res, next) => {
         if (!roles.includes(req.user.role)) {
+            console.error(`[AUTH] 403 Forbidden: User ${req.user._id} with role [${req.user.role}] attempted to access route needing [${roles}]`);
             res.status(403);
             throw new Error(`User role ${req.user.role} is not authorized to access this route`);
         }

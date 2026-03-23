@@ -14,8 +14,15 @@ const noticeRoutes = require('./routes/noticeRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const teacherRoutes = require('./routes/teacherRoutes');
 const enrollmentRequestRoutes = require('./routes/enrollmentRequestRoutes');
+const attendanceRoutes = require('./routes/attendanceRoutes');
 
 const app = express();
+
+// Request Logger (Debug Logs)
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+    next();
+});
 
 // Middleware
 app.use(helmet({ crossOriginResourcePolicy: false }));
@@ -44,7 +51,13 @@ app.use('/api/v1/performance', performanceRoutes);
 app.use('/api/v1/notices', noticeRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/teachers', teacherRoutes);
-app.use('/api/v1/enrollment-requests', enrollmentRequestRoutes);
+app.use('/api/v1/course-requests', enrollmentRequestRoutes);
+app.use('/api/v1/attendance', attendanceRoutes);
+
+// Test Route
+app.get('/api/v1/test', (req, res) => {
+    res.status(200).json({ success: true, message: 'Test API is working properly in production' });
+});
 
 // Health Check
 app.get('/health', (req, res) => {

@@ -29,7 +29,14 @@ class AuthService {
             const user = await userRepository.findByEmail(email);
             console.log(`👤 User found: ${user ? 'Yes' : 'No'}`);
 
-            if (user && (await user.matchPassword(password))) {
+            if (!user) {
+                console.log(`❌ User not found in database: ${email}. The production database might be empty. Please register first.`);
+                const error = new Error('User not registered in this database');
+                error.statusCode = 401;
+                throw error;
+            }
+
+            if (await user.matchPassword(password)) {
                 console.log(`✅ Password match for: ${email}`);
                 
                 // Auto-promote first user to ADMIN if no admins exist
@@ -50,7 +57,7 @@ class AuthService {
                     token: generateToken(user._id)
                 };
             } else {
-                console.log(`❌ Invalid credentials for: ${email}`);
+                console.log(`❌ Invalid password for: ${email}`);
                 const error = new Error('Invalid email or password');
                 error.statusCode = 401;
                 throw error;

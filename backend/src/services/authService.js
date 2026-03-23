@@ -70,6 +70,28 @@ class AuthService {
         }
         return user;
     }
+
+    async registerStudentPublic(userData) {
+        return this.registerUser({ ...userData, role: 'STUDENT' });
+    }
+
+    async createAdmin(userData) {
+        return this.registerUser({ ...userData, role: 'ADMIN' });
+    }
+
+    async getAllAdmins() {
+        return await require('../models/User').find({ role: 'ADMIN' }).select('-password');
+    }
+
+    async promoteToAdmin(userId) {
+        const user = await require('../models/User').findByIdAndUpdate(userId, { role: 'ADMIN' }, { new: true });
+        if (!user) {
+            const error = new Error('User not found');
+            error.statusCode = 404;
+            throw error;
+        }
+        return user;
+    }
 }
 
 module.exports = new AuthService();

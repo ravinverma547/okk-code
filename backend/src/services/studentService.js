@@ -35,14 +35,16 @@ class StudentService {
             const user = await userRepository.create({
                 name: studentData.name,
                 email: studentData.email,
-                password: studentData.password,
+                password: studentData.password || 'password123',
                 role: 'STUDENT'
             });
 
             // 2. Create Student Profile
             const student = await studentRepository.create({
                 user: user._id,
-                studentId: studentData.studentId,
+                studentId: studentData.studentId || `STU-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                phone: studentData.phone,
+                address: studentData.address,
                 courses: studentData.courses || []
             });
 

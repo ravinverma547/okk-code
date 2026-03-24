@@ -22,9 +22,12 @@ const studentSchema = {
         body: z.object({
             name: z.string().min(3),
             email: z.string().email(),
-            password: z.string().min(6),
-            studentId: z.string(),
-            courses: z.array(z.string()).optional()
+            password: z.string().min(6).optional(),
+            studentId: z.string().optional(),
+            course: z.string().optional(), // From frontend
+            courses: z.array(z.string()).optional(), // Original
+            phone: z.string().optional(),
+            address: z.string().optional()
         })
     }),
     create: z.object({ // Keep for legacy/manual linking if needed

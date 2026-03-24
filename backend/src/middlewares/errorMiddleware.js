@@ -3,7 +3,7 @@ const env = require('../config/env');
 const errorHandler = (err, req, res, next) => {
     const statusCode = err.statusCode || (res.statusCode === 200 ? 500 : res.statusCode);
     console.error(`❌ Error (${statusCode}): ${err.message}`);
-    if (env.NODE_ENV !== 'production') console.error(err.stack);
+    console.error(err.stack); // Always log stack trace to console for easier debugging
     
     res.status(statusCode);
     res.json({

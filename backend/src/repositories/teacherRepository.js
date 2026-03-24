@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Teacher = require('../models/Teacher');
 const User = require('../models/User');
 

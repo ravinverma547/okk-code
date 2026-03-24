@@ -351,7 +351,7 @@ export default function CoursesPage() {
         <div className="mt-12">
           <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center">
             <Users className="mr-2 h-5 w-5 text-indigo-500" />
-            Enrollment Requests
+            Enrollment Requests ({requests.filter(r => r.status === 'PENDING').length})
           </h2>
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
             <table className="min-w-full divide-y divide-slate-200">
@@ -363,7 +363,7 @@ export default function CoursesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 bg-white">
-                {requests.map((req: any) => (
+                {requests.filter((r: any) => r.status === 'PENDING').map((req: any) => (
                   <tr key={req._id}>
                     <td className="px-6 py-4">
                       <div className="font-semibold text-slate-900">{req.student?.user?.name || 'Unknown'}</div>

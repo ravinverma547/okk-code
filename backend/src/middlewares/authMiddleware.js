@@ -35,9 +35,9 @@ const protect = asyncHandler(async (req, res, next) => {
 const authorize = (...roles) => {
     return (req, res, next) => {
         if (!roles.includes(req.user.role)) {
-            console.error(`[AUTH] 403 Forbidden: User ${req.user._id} with role [${req.user.role}] attempted to access route needing [${roles}]`);
+            console.error(`[AUTH] 403 Forbidden: User ID: ${req.user._id}, Email: ${req.user.email}, Role: [${req.user.role}]. Required roles: [${roles.join(', ')}]`);
             res.status(403);
-            throw new Error(`User role ${req.user.role} is not authorized to access this route`);
+            throw new Error(`Forbidden: You do not have permission to access this resource.`);
         }
         next();
     };

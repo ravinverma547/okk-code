@@ -28,7 +28,8 @@ class FeeService {
             const newPaidAmount = (fee.paidAmount || 0) + Number(paidAmount);
             let newStatus = 'PARTIAL';
             
-            if (newPaidAmount >= fee.totalAmount) {
+            const targetAmount = fee.totalAmount || fee.amount || 0;
+            if (newPaidAmount >= targetAmount) {
                 newStatus = 'PAID';
             }
 

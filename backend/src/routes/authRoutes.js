@@ -1,6 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, registerStudentPublic, loginUser, getUserProfile, createAdmin, getAllAdmins, promoteToAdmin } = require('../controllers/authController');
+const { 
+  registerUser, 
+  registerStudentPublic, 
+  loginUser, 
+  getUserProfile, 
+  createAdmin, 
+  getAllAdmins, 
+  promoteToAdmin,
+  updateProfile,
+  changePassword 
+} = require('../controllers/authController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 const validate = require('../middlewares/validateMiddleware');
 const { authSchema } = require('../validators/schemas');
@@ -9,6 +19,8 @@ router.post('/register', protect, authorize('ADMIN'), validate(authSchema.regist
 router.post('/register/student', validate(authSchema.register), registerStudentPublic);
 router.post('/login', validate(authSchema.login), loginUser);
 router.get('/profile', protect, getUserProfile);
+router.put('/profile', protect, updateProfile);
+router.put('/change-password', protect, changePassword);
 
 // Admin Management (Restricted)
 router.post('/admins', protect, authorize('ADMIN'), validate(authSchema.register), createAdmin);

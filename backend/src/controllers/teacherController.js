@@ -27,7 +27,18 @@ const getMyTeacherProfile = asyncHandler(async (req, res) => {
         res.status(404);
         throw new Error('Teacher profile not found');
     }
-    sendResponse(res, 200, 'Teacher profile retrieved successfully', teacher);
+
+    // Calculate unique students across all assigned courses
+    const Student = require('../models/Student');
+    const courseIds = teacher.assignedCourses.map(c => c._id || c);
+    const studentCount = await Student.countDocuments({ courses: { $in: courseIds } });
+
+    const responseData = {
+        ...teacher.toObject(),
+        studentCount
+    };
+
+    sendResponse(res, 200, 'Teacher profile retrieved successfully', responseData);
 });
 
 const updateTeacher = asyncHandler(async (req, res) => {

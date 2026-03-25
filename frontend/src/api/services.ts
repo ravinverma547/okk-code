@@ -97,6 +97,16 @@ export const authService = {
   promoteUserToAdmin: async (userId: string) => {
     const response = await api.put(`/auth/promote/${userId}`);
     return response.data;
+  },
+
+  updateProfile: async (data: any) => {
+    const response = await api.put('/auth/profile', data);
+    return response.data.data;
+  },
+
+  changePassword: async (data: any) => {
+    const response = await api.put('/auth/change-password', data);
+    return response.data;
   }
 };
 
@@ -235,4 +245,38 @@ export const courseRequestService = {
     const response = await api.patch(`/course-requests/${id}/status`, { status });
     return response.data.data;
   }
+};
+
+export const studyMaterialService = {
+  getMaterials: async (params = {}) => {
+    const response = await api.get('/study-materials', { params });
+    return response.data.data;
+  },
+  uploadMaterial: async (formData: FormData) => {
+    const response = await api.post('/study-materials', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data.data;
+  },
+  deleteMaterial: async (id: string) => {
+    const response = await api.delete(`/study-materials/${id}`);
+    return response.data.data;
+  },
+};
+
+export const leaveRequestService = {
+  getRequests: async () => {
+    const response = await api.get('/leave-requests');
+    return response.data.data;
+  },
+  applyLeave: async (data: any) => {
+    const response = await api.post('/leave-requests', data);
+    return response.data.data;
+  },
+  updateStatus: async (id: string, status: string, adminRemarks?: string) => {
+    const response = await api.patch(`/leave-requests/${id}/status`, { status, adminRemarks });
+    return response.data.data;
+  },
 };

@@ -10,7 +10,8 @@ import {
   TrendingUp,
   Loader2,
   Calendar,
-  MoreHorizontal
+  MoreHorizontal,
+  Download
 } from "lucide-react"
 import { performanceService, studentService } from "@/api/services"
 
@@ -35,6 +36,9 @@ export default function PerformancePage() {
   useEffect(() => {
     fetchData()
   }, [])
+
+  const [selectedPerformance, setSelectedPerformance] = useState<any>(null)
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
 
   const fetchData = async () => {
     try {
@@ -69,6 +73,21 @@ export default function PerformancePage() {
     }
   }
 
+  const handleExportCSV = () => {
+    const headers = ["Student,Subject,Type,Date,Marks,Total"]
+    const rows = records.map(r => 
+      `${r.student?.user?.name},${r.subject},${r.type},${new Date(r.date).toLocaleDateString()},${r.marks},${r.totalMarks}`
+    )
+    const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n")
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement("a")
+    link.setAttribute("href", encodedUri)
+    link.setAttribute("download", `performance_export_${new Date().toLocaleDateString()}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   const filteredRecords = records.filter((r: any) => 
     r.student?.user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.subject.toLowerCase().includes(searchTerm.toLowerCase())
@@ -81,69 +100,184 @@ export default function PerformancePage() {
           <h1 className="text-2xl font-bold text-slate-900">
             {user?.role === 'STUDENT' ? 'My Performance' : 'Student Performance'}
           </h1>
-          <p className="text-slate-500">Track academic marks, quizzes, and activities</p>
+          <p className="text-slate-500">Track academic marks, quizzes, and activities in a professional view.</p>
         </div>
-        {user?.role === 'ADMIN' && (
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-all shadow-sm"
+        <div className="flex gap-2">
+           <button 
+            onClick={handleExportCSV}
+            className="flex items-center justify-center rounded-lg bg-white border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all shadow-sm active:scale-95"
           >
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Result
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
           </button>
-        )}
+          {user?.role === 'ADMIN' && (
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-all shadow-sm active:scale-95"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add New Result
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-        <input
-          type="text"
-          placeholder="Search student or subject..."
-          className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      <div className="flex items-center justify-between gap-4">
+        <div className="relative max-w-md flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search student or subject..."
+            className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {loading ? (
-          <div className="col-span-full flex h-48 items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
-          </div>
-        ) : filteredRecords.map((record: any) => (
-          <div key={record._id} className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-3">
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
-                  record.type === 'EXAM' ? 'bg-indigo-50 text-indigo-600' : 
-                  record.type === 'ACTIVITY' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
-                }`}>
-                  {record.type === 'EXAM' ? <GraduationCap className="h-5 w-5" /> : 
-                   record.type === 'ACTIVITY' ? <Activity className="h-5 w-5" /> : <Trophy className="h-5 w-5" />}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                <th className="px-6 py-4">Student Name</th>
+                <th className="px-6 py-4">Subject</th>
+                <th className="px-6 py-4">Type</th>
+                <th className="px-6 py-4">Date</th>
+                <th className="px-6 py-4 text-center">Marks</th>
+                <th className="px-6 py-4 text-center">Percentage</th>
+                <th className="px-6 py-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center">
+                    <Loader2 className="mx-auto h-8 w-8 animate-spin text-indigo-500" />
+                  </td>
+                </tr>
+              ) : filteredRecords.length > 0 ? filteredRecords.map((record: any) => (
+                <tr key={record._id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="font-semibold text-slate-900">{record.student?.user?.name || 'Unknown Student'}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{record.subject}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                      record.type === 'EXAM' ? 'bg-indigo-100 text-indigo-700' : 
+                      record.type === 'ACTIVITY' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                    }`}>
+                      {record.type}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 text-xs font-medium">
+                    {new Date(record.date).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <span className="font-bold text-slate-900">{record.marks}</span>
+                    <span className="text-slate-400">/{record.totalMarks}</span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <div className="flex flex-col items-center">
+                      <span className={`text-xs font-bold ${
+                        (record.marks/record.totalMarks) >= 0.75 ? 'text-emerald-600' :
+                        (record.marks/record.totalMarks) >= 0.40 ? 'text-indigo-600' : 'text-rose-600'
+                      }`}>
+                        {Math.round((record.marks/record.totalMarks) * 100)}%
+                      </span>
+                      <div className="w-12 h-1 bg-slate-100 rounded-full mt-1 overflow-hidden">
+                        <div 
+                          className={`h-full ${
+                             (record.marks/record.totalMarks) >= 0.75 ? 'bg-emerald-500' :
+                             (record.marks/record.totalMarks) >= 0.40 ? 'bg-indigo-500' : 'bg-rose-500'
+                          }`}
+                          style={{ width: `${(record.marks/record.totalMarks) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <button 
+                      onClick={() => {
+                        setSelectedPerformance(record)
+                        setIsViewModalOpen(true)
+                      }}
+                      className="text-indigo-600 hover:text-indigo-900 text-xs font-bold uppercase tracking-tight"
+                    >
+                      View Details
+                    </button>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-slate-500 italic">No performance records found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+       {/* View Details Modal */}
+       {isViewModalOpen && selectedPerformance && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">Performance Details</h2>
+                <p className="text-slate-500">{selectedPerformance.student?.user?.name}</p>
+              </div>
+              <button 
+                onClick={() => setIsViewModalOpen(false)}
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+              >
+                <MoreHorizontal className="h-5 w-5 text-slate-400" />
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-xl bg-slate-50 p-4 border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Subject</p>
+                  <p className="font-bold text-slate-900">{selectedPerformance.subject}</p>
                 </div>
+                <div className="rounded-xl bg-slate-50 p-4 border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Record Type</p>
+                  <p className="font-bold text-slate-900">{selectedPerformance.type}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-6 rounded-2xl bg-indigo-50 border-2 border-indigo-100">
                 <div>
-                  <h3 className="font-bold text-slate-900">{record.student?.user?.name}</h3>
-                  <p className="text-xs text-slate-500">{record.subject}</p>
+                   <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Total Outcome</p>
+                   <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-4xl font-black text-indigo-700">{selectedPerformance.marks}</span>
+                      <span className="text-xl font-bold text-indigo-300">/ {selectedPerformance.totalMarks}</span>
+                   </div>
+                </div>
+                <div className="text-right">
+                   <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Percentage</p>
+                   <p className="text-3xl font-black text-indigo-700 mt-1">{Math.round((selectedPerformance.marks/selectedPerformance.totalMarks) * 100)}%</p>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-lg font-bold text-slate-900">{record.marks}/{record.totalMarks}</div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{record.type}</div>
-              </div>
-            </div>
 
-            <div className="mt-6 flex items-center justify-between border-t border-slate-50 pt-4">
-              <div className="flex items-center text-xs text-slate-400">
-                <Calendar className="mr-1.5 h-3.5 w-3.5" />
-                {new Date(record.date).toLocaleDateString()}
+              <div className="py-2">
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Teacher Remarks</p>
+                 <p className="text-slate-700 text-sm leading-relaxed bg-amber-50/50 p-4 rounded-xl border border-amber-100 italic">
+                    "{selectedPerformance.remarks || 'No specific remarks provided for this record.'}"
+                 </p>
               </div>
-              <div className="text-xs font-semibold text-indigo-600">
-                {Math.round((record.marks/record.totalMarks) * 100)}% Score
-              </div>
+
+              <button
+                onClick={() => setIsViewModalOpen(false)}
+                className="w-full rounded-xl bg-slate-900 py-3 text-sm font-bold text-white hover:bg-slate-800 transition-all"
+              >
+                Close View
+              </button>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">

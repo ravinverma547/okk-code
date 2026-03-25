@@ -9,6 +9,10 @@ class UserRepository {
         return await User.findById(id).select('-password').populate('studentProfile');
     }
 
+    async findByIdWithPassword(id) {
+        return await User.findById(id).populate('studentProfile');
+    }
+
     async create(userData) {
         return await User.create(userData);
     }

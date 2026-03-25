@@ -126,4 +126,25 @@ const promoteToAdmin = asyncHandler(async (req, res) => {
     });
 });
 
-module.exports = { registerUser, registerStudentPublic, loginUser, getUserProfile, createAdmin, getAllAdmins, promoteToAdmin };
+const updateProfile = asyncHandler(async (req, res) => {
+    const user = await authService.updateProfile(req.user._id, req.body);
+    sendResponse(res, 200, 'Profile updated successfully', user);
+});
+
+const changePassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+    const result = await authService.updatePassword(req.user._id, oldPassword, newPassword);
+    sendResponse(res, 200, result.message);
+});
+
+module.exports = { 
+  registerUser, 
+  registerStudentPublic, 
+  loginUser, 
+  getUserProfile, 
+  createAdmin, 
+  getAllAdmins, 
+  promoteToAdmin,
+  updateProfile,
+  changePassword
+};

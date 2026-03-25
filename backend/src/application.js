@@ -15,8 +15,13 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const teacherRoutes = require('./routes/teacherRoutes');
 const enrollmentRequestRoutes = require('./routes/enrollmentRequestRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
+const studyMaterialRoutes = require('./routes/studyMaterialRoutes');
+const leaveRequestRoutes = require('./routes/leaveRequestRoutes');
 
 const app = express();
+
+// Serve uploads statically
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Request Logger (Debug Logs)
 app.use((req, res, next) => {
@@ -40,7 +45,9 @@ const limiter = rateLimit({
     max: 100,
     message: 'Too many requests from this IP, please try again after 15 minutes'
 });
-app.use('/api', limiter);
+if (process.env.NODE_ENV !== 'development') {
+    app.use('/api', limiter);
+}
 
 // Routes
 app.use('/api/v1/auth', authRoutes);
@@ -53,6 +60,8 @@ app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/teachers', teacherRoutes);
 app.use('/api/v1/course-requests', enrollmentRequestRoutes);
 app.use('/api/v1/attendance', attendanceRoutes);
+app.use('/api/v1/study-materials', studyMaterialRoutes);
+app.use('/api/v1/leave-requests', leaveRequestRoutes);
 
 // Test Route
 app.get('/api/v1/test', (req, res) => {

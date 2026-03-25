@@ -68,14 +68,49 @@ class AuthService {
         }
     }
 
-    async getUserProfile(id) {
-        const user = await userRepository.findById(id);
+    async updateProfile(id, updateData) {
+        const user = await userRepository.findByIdWithPassword(id);
         if (!user) {
             const error = new Error('User not found');
             error.statusCode = 404;
             throw error;
         }
-        return user;
+
+        if (updateData.name) user.name = updateData.name;
+        
+        // If it's a student, update their student profile phone too
+        if (user.role === 'STUDENT' && user.studentProfile) {
+            const Student = require('../models/Student');
+            await Student.findByIdAndUpdate(user.studentProfile._id, { phone: updateData.phone });
+        }
+
+        const updatedUser = await user.save();
+        return {
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            role: updatedUser.role
+        };
+    }
+
+    async updatePassword(id, oldPassword, newPassword) {
+        const user = await userRepository.findByIdWithPassword(id);
+        if (!user) {
+            const error = new Error('User not found');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        const isMatch = await user.matchPassword(oldPassword);
+        if (!isMatch) {
+            const error = new Error('Incorrect current password');
+            error.statusCode = 401;
+            throw error;
+        }
+
+        user.password = newPassword;
+        await user.save();
+        return { message: 'Password updated successfully' };
     }
 }
 

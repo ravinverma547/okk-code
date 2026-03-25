@@ -5,16 +5,17 @@ import { usePathname } from "next/navigation"
 import { 
   BarChart3, 
   Users, 
-  ClipboardCheck, 
+  LayoutDashboard, 
+  BookOpen, 
+  Calendar, 
   Bell, 
-  Settings, 
-  GraduationCap,
-  LogOut,
-  Shield,
   CreditCard,
-  BookOpen,
-  Trophy,
-  Megaphone
+  ClipboardList,
+  GraduationCap,
+  Activity,
+  Settings,
+  Library,
+  LogOut
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/context/AuthContext"
@@ -23,12 +24,15 @@ const navigation = [
   { name: "Dashboard", href: "/", icon: BarChart3 },
   { name: "Students", href: "/students", icon: Users, roles: ['ADMIN', 'TEACHER'] },
   { name: "Teachers", href: "/teachers", icon: Users, roles: ['ADMIN'], adminOnly: true }, // Admin manages teachers
-  { name: "Attendance", href: "/attendance", icon: ClipboardCheck, roles: ['ADMIN', 'TEACHER'] },
+  { name: "Attendance", href: "/attendance", icon: ClipboardList, roles: ['ADMIN', 'TEACHER'] },
   { name: "Fees", href: "/fees", icon: CreditCard, roles: ['ADMIN'] },
   { name: "Courses", href: "/courses", icon: BookOpen },
-  { name: "Performance", href: "/performance", icon: Trophy, roles: ['ADMIN', 'TEACHER'] },
-  { name: "Admins", href: "/admins", icon: Shield, roles: ['ADMIN'] },
-  { name: "Notices", href: "/notices", icon: Megaphone },
+  { name: 'Study Material', href: '/study-material', icon: Library, roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
+  { name: 'Leave', href: '/leave', icon: Calendar, roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
+  { name: 'Settings', href: '/settings', icon: Settings, roles: ['ADMIN', 'STUDENT', 'TEACHER'] },
+  { name: "Performance", href: "/performance", icon: Activity, roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
+  { name: "Admins", href: "/admins", icon: Users, roles: ['ADMIN'] },
+  { name: "Notices", href: "/notices", icon: Bell },
 ]
 
 export default function Sidebar() {

@@ -14,19 +14,33 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     
     const pendingFees = await feeRepository.getOverdueFees().then(f => f.length);
     
-    const atRiskData = await studentRepository.findAll({ 
-        $or: [
-            { attendancePercentage: { $lt: 75 } },
-            { performanceScore: { $lt: 40 } }
-        ]
-    });
+    const atRiskData = await studentRepository.findAll({ status: 'AT_RISK' });
+    const atRiskStudentsCount = atRiskData.total;
+    const atRiskStudents = atRiskData.students.slice(0, 5);
+
+    // Simulated trend data for Recharts
+    const revenueTrend = [
+        { month: 'Jan', revenue: monthlyRevenue * 0.8 },
+        { month: 'Feb', revenue: monthlyRevenue * 0.9 },
+        { month: 'Mar', revenue: monthlyRevenue }
+    ];
+
+    const attendanceTrend = [
+        { day: 'Mon', attendance: 85 },
+        { day: 'Tue', attendance: 88 },
+        { day: 'Wed', attendance: 92 },
+        { day: 'Thu', attendance: 90 },
+        { day: 'Fri', attendance: 87 }
+    ];
 
     sendResponse(res, 200, 'Dashboard statistics retrieved', {
         totalStudents,
         monthlyRevenue,
         pendingFees,
-        atRiskStudentsCount: atRiskData.total,
-        atRiskStudents: atRiskData.students.slice(0, 5)
+        atRiskStudentsCount,
+        atRiskStudents,
+        revenueTrend,
+        attendanceTrend
     });
 });
 

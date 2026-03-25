@@ -11,7 +11,8 @@ import {
   Loader2,
   Save,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Download
 } from "lucide-react"
 import { attendanceService, studentService } from "@/api/services"
 
@@ -34,13 +35,9 @@ export default function AttendancePage() {
   const fetchStudents = async () => {
     try {
       const responseData = await studentService.getStudents()
-
-      // Yahan hum object me se sirf 'students' ka array nikal rahe hain
       const studentsArray = responseData.students || []
-
       setStudents(studentsArray)
 
-      // Initialize attendance state
       const initialAttendance: Record<string, string> = {}
       studentsArray.forEach((s: any) => {
         initialAttendance[s._id] = 'PRESENT'
@@ -60,7 +57,6 @@ export default function AttendancePage() {
   const handleSave = async () => {
     setSubmitting(true)
     try {
-      // In a real app, we'd send a bulk update
       const promises = Object.entries(attendance).map(([studentId, status]) =>
         attendanceService.markAttendance({ studentId, date, status })
       )
@@ -97,6 +93,38 @@ export default function AttendancePage() {
     }
   }, [viewMode, selectedStudent])
 
+  const handlePrevDay = () => {
+    const d = new Date(date)
+    d.setDate(d.getDate() - 1)
+    setDate(d.toISOString().split('T')[0])
+  }
+
+  const handleNextDay = () => {
+    const d = new Date(date)
+    d.setDate(d.getDate() + 1)
+    setDate(d.toISOString().split('T')[0])
+  }
+
+  const handleExportCSV = () => {
+    const headers = ["Student Name", "Status", "Date"]
+    const exportDate = new Date(date).toLocaleDateString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit' });
+
+    const rows = Object.entries(attendance).map(([studentId, status]) => {
+      const student = students.find(s => s._id === studentId);
+      const studentName = student?.user?.name || student?.userDetails?.name || student?.userId?.name || "Unknown Student";
+      return `"${studentName}","${status}","${exportDate}"`;
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `attendance_export_${new Date(date).toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -106,10 +134,17 @@ export default function AttendancePage() {
             {viewMode === 'mark' ? 'Mark daily attendance for all students' : 'View past attendance records'}
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={handleExportCSV}
+            className="flex items-center justify-center rounded-lg bg-white border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </button>
           <button
             onClick={() => setViewMode(viewMode === 'mark' ? 'history' : 'mark')}
-            className="flex items-center justify-center rounded-lg bg-white border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+            className="flex items-center justify-center rounded-lg bg-white border border-slate-200 px-6 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all shadow-sm active:scale-95"
           >
             {viewMode === 'mark' ? 'View History' : 'Mark Attendance'}
           </button>
@@ -117,7 +152,7 @@ export default function AttendancePage() {
             <button
               onClick={handleSave}
               disabled={submitting}
-              className="flex items-center justify-center rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50 transition-all shadow-md active:scale-95"
+              className="flex items-center justify-center rounded-lg bg-indigo-600 px-6 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50 transition-all shadow-md active:scale-95"
             >
               {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               Save Attendance
@@ -131,14 +166,20 @@ export default function AttendancePage() {
           <div className="flex items-center space-x-4">
             {viewMode === 'mark' ? (
               <div className="flex items-center rounded-xl bg-slate-50 border border-slate-200 p-1">
-                <button className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600">
+                <button 
+                  onClick={handlePrevDay}
+                  className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600"
+                >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <div className="px-4 flex items-center text-sm font-medium text-slate-700">
                   <CalendarIcon className="mr-2 h-4 w-4 text-indigo-500" />
                   {new Date(date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                 </div>
-                <button className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600">
+                <button 
+                  onClick={handleNextDay}
+                  className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600"
+                >
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>

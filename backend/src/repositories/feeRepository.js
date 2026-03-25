@@ -51,7 +51,7 @@ class FeeRepository {
             {
                 $group: {
                     _id: null,
-                    totalRevenue: { $sum: '$amount' }
+                    totalRevenue: { $sum: '$paidAmount' }
                 }
             }
         ]);

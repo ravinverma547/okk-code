@@ -16,11 +16,29 @@ import {
   Loader2,
   Trophy,
   Megaphone,
-  DollarSign
+  DollarSign,
+  Library
 } from "lucide-react"
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
+  PieChart,
+  Pie
+} from "recharts"
+
+const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#f43f5e'];
 
 export default function Home() {
   const { isAuthenticated, user } = useAuth()
+// ... (rest of the state and useEffect remains mostly same, just updating UI)
   const router = useRouter()
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -341,22 +359,86 @@ export default function Home() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
-          <div key={stat.name} className="relative overflow-hidden rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition-all hover:shadow-md">
+          <div key={stat.name} className="relative overflow-hidden rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition-all hover:shadow-md glass group cursor-pointer">
             <div className="flex items-center justify-between">
-              <div className={stat.bg + " p-2 rounded-lg"}>
+              <div className={stat.bg + " p-2 rounded-lg group-hover:scale-110 transition-transform"}>
                 <stat.icon className={"h-6 w-6 " + stat.color} />
               </div>
-              <div className={"flex items-center text-xs font-medium " + (stat.trend === "up" ? "text-emerald-600" : "text-rose-600")}>
+              <div className={"flex items-center text-xs font-bold " + (stat.trend === "up" ? "text-emerald-600" : "text-rose-600")}>
                 {stat.change}
                 {stat.trend === "up" ? <ArrowUpRight className="ml-1 h-3 w-3" /> : <ArrowDownRight className="ml-1 h-3 w-3" />}
               </div>
             </div>
             <div className="mt-4">
-              <p className="text-sm font-medium text-slate-500">{stat.name}</p>
-              <p className="mt-1 text-3xl font-bold text-slate-900">{stat.value}</p>
+              <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">{stat.name}</p>
+              <p className="mt-1 text-3xl font-extrabold text-slate-900">{stat.value}</p>
             </div>
+            <div className={`absolute bottom-0 left-0 h-1 w-0 group-hover:w-full transition-all duration-500 ${stat.bg.replace('bg-', 'bg-')}`} style={{backgroundColor: 'currentColor'}} />
           </div>
         ))}
+      </div>
+
+      {/* Analytics Charts Section */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        {/* Revenue Trend Area Chart */}
+        <div className="lg:col-span-2 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 glass">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">Revenue Growth</h3>
+              <p className="text-xs text-slate-500 font-medium">Monthly collection overview</p>
+            </div>
+            <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+               <TrendingUp className="h-5 w-5" />
+            </div>
+          </div>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={stats?.revenueTrend || []}>
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  itemStyle={{ fontWeight: 'bold' }}
+                />
+                <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Attendance Distribution */}
+        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 glass">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">Attendance Status</h3>
+              <p className="text-xs text-slate-500 font-medium">Weekly daily avg</p>
+            </div>
+            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+               <CheckCircle2 className="h-5 w-5" />
+            </div>
+          </div>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats?.attendanceTrend || []}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                <YAxis axisLine={false} tickLine={false} hide />
+                <Tooltip 
+                  cursor={{fill: '#f8fafc', radius: 8}}
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                />
+                <Bar dataKey="attendance" fill="#818cf8" radius={[6, 6, 0, 0]} barSize={20} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">

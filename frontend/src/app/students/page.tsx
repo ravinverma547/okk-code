@@ -15,7 +15,10 @@ import {
   GraduationCap,
   Loader2,
   X,
-  Shield
+  Shield,
+  Edit,
+  Activity,
+  Download
 } from "lucide-react"
 
 export default function StudentsPage() {
@@ -40,6 +43,9 @@ export default function StudentsPage() {
     phone: "",
     address: ""
   })
+
+  const [selectedStudentForView, setSelectedStudentForView] = useState<any>(null)
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
 
   const fetchStudents = async () => {
     setLoading(true)
@@ -88,38 +94,44 @@ export default function StudentsPage() {
     }
   }
 
-  const handlePromote = async (userId: string) => {
-    if (!userId) {
-      alert("Invalid user ID");
-      return;
-    }
-    if (confirm("Are you sure you want to promote this user to Admin?")) {
-      try {
-        const { authService } = await import("@/api/services");
-        await authService.promoteUserToAdmin(userId);
-        alert("User promoted to Admin successfully!");
-        setOpenDropdownId(null);
-        fetchStudents();
-      } catch (err: any) {
-        alert(err.response?.data?.message || "Failed to promote user");
-      }
-    }
+  const handleExportCSV = () => {
+    const headers = ["Student ID,Name,Email,Phone,Status,Role"]
+    const rows = students.map(s => 
+      `${s.studentId},${s.user?.name},${s.user?.email},${s.phone || 'N/A'},${s.status},${s.user?.role}`
+    )
+    const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n")
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement("a")
+    link.setAttribute("href", encodedUri)
+    link.setAttribute("download", `students_export_${new Date().toLocaleDateString()}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Student Management</h1>
-          <p className="mt-1 text-sm text-slate-500">Manage your academy's real students from the database.</p>
+          <p className="text-slate-500">Manage student records, enrollment, and profiles</p>
         </div>
-        <button 
-          onClick={() => setShowModal(true)}
-          className="flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-all active:scale-95"
-        >
-          <Plus className="h-4 w-4" />
-          Add New Student
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={handleExportCSV}
+            className="flex items-center justify-center rounded-lg bg-white border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </button>
+          <button 
+            onClick={() => setShowModal(true)}
+            className="flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-all shadow-sm"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Student
+          </button>
+        </div>
       </div>
 
       <div className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
@@ -252,13 +264,27 @@ export default function StudentsPage() {
                       </button>
 
                       {openDropdownId === student._id && (
-                        <div className="absolute right-6 top-10 z-10 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <div className="absolute right-6 top-10 z-10 w-48 rounded-xl bg-white py-1 shadow-xl ring-1 ring-black/5 animate-in slide-in-from-top-1 duration-200">
                           <button
-                            onClick={() => handlePromote(student.user?._id || student.userId?._id)}
-                            className="block w-full px-4 py-2 text-sm text-left text-slate-700 hover:bg-slate-100"
+                            onClick={() => {
+                              setSelectedStudentForView(student)
+                              setIsViewModalOpen(true)
+                              setOpenDropdownId(null)
+                            }}
+                            className="flex w-full items-center px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                           >
-                            <Shield className="mr-2 inline h-4 w-4 text-indigo-500" />
-                            Promote to Admin
+                            <Search className="mr-2 h-4 w-4 text-indigo-500" />
+                            View Details
+                          </button>
+                          <button
+                            onClick={() => {
+                              // Handle edit logic here if needed
+                              setOpenDropdownId(null)
+                            }}
+                            className="flex w-full items-center px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                          >
+                            <Edit className="mr-2 h-4 w-4 text-amber-500" />
+                            Edit Student
                           </button>
                         </div>
                       )}
@@ -341,6 +367,103 @@ export default function StudentsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* View Details Modal */}
+      {isViewModalOpen && selectedStudentForView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200 overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="relative h-32 bg-indigo-600 overflow-hidden">
+               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+               <button 
+                onClick={() => setIsViewModalOpen(false)} 
+                className="absolute right-4 top-4 rounded-full bg-white/20 p-2 text-white hover:bg-white/30 transition-all"
+               >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="px-8 pb-8">
+              <div className="relative -mt-16 mb-6">
+                <div className="h-32 w-32 rounded-3xl bg-white p-2 shadow-xl">
+                  <div className="h-full w-full rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-700 text-4xl font-bold border-2 border-white">
+                    {(selectedStudentForView.user?.name || selectedStudentForView.userDetails?.name || '?').charAt(0)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-2xl font-bold text-slate-900">{selectedStudentForView.user?.name || selectedStudentForView.userDetails?.name}</h3>
+                    <p className="text-slate-500 font-medium">Student ID: {selectedStudentForView.studentId}</p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 text-slate-600">
+                      <div className="h-10 w-10 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-100"><Mail className="h-5 w-5 text-indigo-500" /></div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email Address</p>
+                        <p className="text-sm font-medium">{selectedStudentForView.user?.email || selectedStudentForView.userDetails?.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 text-slate-600">
+                      <div className="h-10 w-10 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-100"><Phone className="h-5 w-5 text-indigo-500" /></div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Phone Number</p>
+                        <p className="text-sm font-medium">{selectedStudentForView.phone || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100">
+                    <h4 className="text-sm font-bold text-slate-900 mb-4 flex items-center"><Activity className="mr-2 h-4 w-4 text-indigo-500" /> Academic Standing</h4>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between text-xs font-bold text-slate-500 mb-1.5 uppercase"><span>Attendance</span><span>{selectedStudentForView.attendancePercentage || 0}%</span></div>
+                        <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${selectedStudentForView.attendancePercentage || 0}%` }}></div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-xs font-bold text-slate-500 mb-1.5 uppercase"><span>Performance</span><span>{selectedStudentForView.performanceScore || 0}%</span></div>
+                        <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${selectedStudentForView.performanceScore || 0}%` }}></div>
+                        </div>
+                      </div>
+                      <div className="pt-2 flex justify-between items-center">
+                        <span className="text-xs font-bold text-slate-500 uppercase">Status</span>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          selectedStudentForView.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 
+                          selectedStudentForView.status === 'INACTIVE' ? 'bg-slate-200 text-slate-700' : 'bg-rose-100 text-rose-700'
+                        }`}>
+                          {selectedStudentForView.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 pt-8 border-t border-slate-100">
+                <h4 className="text-sm font-bold text-slate-900 mb-4 flex items-center"><GraduationCap className="mr-2 h-4 w-4 text-indigo-500" /> Enrolled Courses</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedStudentForView.courses && selectedStudentForView.courses.length > 0 ? (
+                    selectedStudentForView.courses.map((course: any) => (
+                      <span key={course._id} className="rounded-xl bg-indigo-50 px-4 py-2 text-sm text-indigo-700 font-bold border border-indigo-100">
+                        {course.title}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-sm text-slate-500 italic">No courses assigned yet.</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
